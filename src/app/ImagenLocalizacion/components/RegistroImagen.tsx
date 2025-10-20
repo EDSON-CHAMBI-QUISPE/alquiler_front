@@ -237,7 +237,6 @@ export default function RegistroImagen() {
     if (datosFormulario?.apellido) payload.apellido = datosFormulario.apellido;
     if (datosFormulario?.telefono) payload.telefono = datosFormulario.telefono;
     if (datosFormulario?.password) payload.password = datosFormulario.password;
-    console.log(payload)
     console.log("📤 Usuario listo para crear (payload final):", payload);
 
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
