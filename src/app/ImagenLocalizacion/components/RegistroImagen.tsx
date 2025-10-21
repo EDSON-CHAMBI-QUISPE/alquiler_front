@@ -73,7 +73,7 @@ export default function RegistroImagen() {
   const isHttpUrl = (v: any) =>
   typeof v === "string" && /^https?:\/\//i.test(v);
   
- 
+
 const maxSize = 1 * 1024 * 1024;
 const allowedTypes = ["image/png", "image/jpeg"]; 
 
@@ -86,16 +86,9 @@ useEffect(() => {
     return;
   }
 
-<<<<<<< HEAD
-    if (datosFormulario?.apellido) payload.apellido = datosFormulario.apellido;
-    if (datosFormulario?.telefono) payload.telefono = datosFormulario.telefono;
-    if (datosFormulario?.password) payload.password = datosFormulario.password;
-    console.log("📤 Usuario listo para crear (payload final):", payload);
-=======
   try {
     const datos = JSON.parse(datosGuardados);
     console.log(" Datos en sessionStorage:", datos);
->>>>>>> upstream/dev/teamsys
 
     let datosAdaptados: any = {};
 
@@ -124,7 +117,7 @@ useEffect(() => {
     setDatosFormulario(datosAdaptados);
     console.log(" Datos adaptados para envío:", datosAdaptados);
 
-   
+  
     if (isHttpUrl(datos.fotoPerfil)) {
       setPreviewImage(datos.fotoPerfil);
     }
