@@ -117,7 +117,6 @@ useEffect(() => {
     setDatosFormulario(datosAdaptados);
     console.log(" Datos adaptados para envío:", datosAdaptados);
 
-   
     if (isHttpUrl(datos.fotoPerfil)) {
       setPreviewImage(datos.fotoPerfil);
     }
@@ -196,7 +195,7 @@ const handleContinuar = async () => {
     if (datosFormulario?.apellido) usuario.apellido = datosFormulario.apellido;
     if (datosFormulario?.telefono) usuario.telefono = datosFormulario.telefono;
     if (datosFormulario?.password) usuario.password = datosFormulario.password;
-
+    console.log(`datos que se enviaran al back ${usuario}`)
     await crearUsuario(usuario);
 
     alert("Usuario registrado exitosamente ");
