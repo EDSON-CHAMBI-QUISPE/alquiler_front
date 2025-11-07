@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
-import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginUsuario } from '@/app/teamsys/services/UserService';
-import { usoGoogleAuth } from '../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
 
 export const LoginForm: React.FC = () => {
@@ -20,10 +19,10 @@ export const LoginForm: React.FC = () => {
     manejarBlur,
     validarFormulario,
   } = useLoginForm();
-  const [errorBackend, setErrorBackend] = useState<string | null>(null); // ← ÚNICO estado para errores del backend
+  const [errorBackend, setErrorBackend] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
@@ -31,7 +30,7 @@ export const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorBackend(null); // ← Limpiar todos los errores del backend
+    setErrorBackend(null);
     setIsLoading(true);
 
     if (!validarFormulario()) {
@@ -48,30 +47,54 @@ export const LoginForm: React.FC = () => {
       );
 
       console.log('Login exitoso:', res);
-      router.push('/home');
-    } catch (error: any) {
+      
+      if (res.data) {
+      const token = res.data.accessToken ?? res.data.token; 
+
+      if (token) sessionStorage.setItem('authToken', token);
+
+      sessionStorage.setItem('userData', JSON.stringify(res.data.user));
+    }
+      
+      // Disparar evento de login exitoso para que el Header se actualice
+      const eventLogin = new CustomEvent("login-exitoso");
+      window.dispatchEvent(eventLogin);
+      
+      // Redirigir a home
+      router.push('/');
+    } catch (error: unknown) {
       console.error('Error completo al iniciar sesión:', error);
       
       let mensajeError = 'Error al iniciar sesión';
       
-      if (error.message?.includes('401') || 
-          error.message?.includes('Unauthorized') ||
-          error.message?.includes('contraseña') ||
-          error.message?.includes('password') ||
-          error.message?.includes('Credenciales')) {
+      if (
+        error instanceof Error &&
+        (
+          error.message.includes('401') ||
+          error.message.includes('Unauthorized') ||
+          error.message.includes('contraseña') ||
+          error.message.includes('password') ||
+          error.message.includes('Credenciales')
+        )
+      ) {
         mensajeError = 'Contraseña incorrecta.';
-      } 
-      else if (error.message?.includes('404') || 
-               error.message?.includes('No encontrado') ||
-               error.message?.includes('Usuario') ||
-               error.message?.includes('user')) {
+      } else if (
+        error instanceof Error &&
+        (
+          error.message.includes('404') ||
+          error.message.includes('No encontrado') ||
+          error.message.includes('Usuario') ||
+          error.message.includes('user')
+        )
+      ) {
         mensajeError = 'Usuario no encontrado. Verifica tu correo electrónico.';
-      }
-      else {
+      } else if (error instanceof Error) {
         mensajeError = error.message || 'Error al conectar con el servidor';
+      } else {
+        mensajeError = 'Error al conectar con el servidor';
       }
-      
-      setErrorBackend(mensajeError); // ← Todos los errores van aquí
+
+      setErrorBackend(mensajeError);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +107,7 @@ export const LoginForm: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-blue-500">Iniciar sesión</h2>
         </div>
 
-        {/* Mostrar errores de Google - debajo del botón */}
+        {/* Mostrar errores de Google */}
         {googleError && (
           <p className="text-red-600 text-sm text-center mb-4">{googleError}</p>
         )}
@@ -161,6 +184,16 @@ export const LoginForm: React.FC = () => {
               {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
           </div>
+           <p className="text-sm text-center mt-3">
+    <a
+      href="/auth/ini-link"
+      className="text-blue-600 hover:underline"
+    >
+    ¿Olvidaste tu contraseña?
+    </a>
+  </p>
+
+
 
           {/* Separador visual con "o" */}
           <div className="flex items-center justify-center my-4 sm:my-6">
