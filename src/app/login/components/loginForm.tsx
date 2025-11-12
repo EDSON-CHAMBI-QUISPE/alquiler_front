@@ -47,7 +47,7 @@ export const LoginForm: React.FC = () => {
       );
 
       console.log('Login exitoso:', res);
-      
+    
       if (res.data) {
       const token = res.data.accessToken ?? res.data.token; 
 
@@ -55,11 +55,14 @@ export const LoginForm: React.FC = () => {
 
       sessionStorage.setItem('userData', JSON.stringify(res.data.user));
     }
-      
       // Disparar evento de login exitoso para que el Header se actualice
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
-      
+      if(res.data.user.twoFactorEnabled){
+        sessionStorage.setItem("checkSeguridad", "true");
+      router.push('/loginSeguridad')
+      return
+      }
       // Redirigir a home
       router.push('/');
     } catch (error: unknown) {
