@@ -1,5 +1,3 @@
-
-
 import { UsuarioDocument } from "../../registro/interfaces/types";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL??"http://localhost:5000 " ;
 
@@ -46,13 +44,23 @@ export async function cambiarTelefono(telefono:string, id:string) {
         return res.json();
       }
 export async function agregarAutenticacion(usuario:string,provider:string,password:string) {
+  if(provider=='local'){
   const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: `{"provider":"${provider}","password":"${password}"}`
   });
   //console.log("Respuesta del servidor:", res.body);
+  return res.json();}
+  else{
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: `{"provider":"${provider}","email":"${password}"}`
+  });
+  //console.log("Respuesta del servidor:", res.body);
   return res.json();
+  }
 }
 
 export async function eliminarAutenticacion(usuario:string,provider:string) {
@@ -137,4 +145,3 @@ export async function obtenerMetodoAutenticacion(usuario: string) {
   if (!res.ok) throw new Error("datos Incorrectos");
   return res.json();
 }
-
