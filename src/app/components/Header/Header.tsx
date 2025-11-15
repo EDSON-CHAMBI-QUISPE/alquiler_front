@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Icono from './Icono';
 import { useRouter } from 'next/navigation';
 import SimpleProfileMenu from '@/app/Menu/components/Menu';
+import { useForceLogout } from "../../teamsys/hooks/useForceLogout";
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -13,7 +14,10 @@ export default function Header() {
 
    // control si el menu esta visible
    const [menuVisible, setMenuVisible] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // NUEVO: solo cuando esto sea true creamos socket
+  const [canInitSocket, setCanInitSocket] = useState(false);
   const lastScrollY = useRef(0);
   const router = useRouter();
   // Detectar si es móvil
@@ -33,8 +37,21 @@ useEffect(() => {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     if (token) {
       setIsLoggedIn(true);
+      setCanInitSocket(true);
     }
+    try {
+      const raw =
+        sessionStorage.getItem("userData") ||
+        localStorage.getItem("userData");
 
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const id = parsed._id || null;
+        setUserId(id);
+      }
+    } catch (e) {
+      console.error("[Header] error leyendo userData:", e);
+    }
     const handleScroll = () => {
       if (window.innerWidth < 640) {
         setAreButtonsVisible(window.scrollY <= lastScrollY.current || window.scrollY === 0);
@@ -45,11 +62,27 @@ useEffect(() => {
     // Escuchar evento de login exitoso
     const handleLoginExitoso = () => {
       setIsLoggedIn(true);
+      setCanInitSocket(true);
+
+      try {
+        const raw =
+          sessionStorage.getItem("userData") ||
+          localStorage.getItem("userData");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const id = parsed._id || null;
+          setUserId(id);
+        }
+      } catch (e) {
+        console.error("[Header] error leyendo userData tras login:", e);
+      }
     };
 
     // Escuchar evento de logout
     const handleLogoutEvent = () => {
       setIsLoggedIn(false);
+      setCanInitSocket(false);
+      setUserId(null);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -74,6 +107,8 @@ useEffect(() => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
     
+      // Solo crea socket cuando hay login + userId válido
+  useForceLogout(isLoggedIn && canInitSocket ? userId : null);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
