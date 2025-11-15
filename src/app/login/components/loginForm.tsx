@@ -66,6 +66,8 @@ sessionStorage.clear()
       router.push('/loginSeguridad')
       return
       }
+      sessionStorage.setItem("intentos","0" )
+      sessionStorage.setItem("login",'true')
       // Redirigir a home
       router.push('/');
     } catch (error: unknown) {

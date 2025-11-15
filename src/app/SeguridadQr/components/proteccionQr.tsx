@@ -54,6 +54,9 @@ export const ProteccionQr: React.FC = () => {
     cargarQR();
   }, []);
   useEffect(() => {
+  const contador=sessionStorage.getItem("intentos")
+  
+  setIntentos(parseInt(contador||"0"))
   const raw = sessionStorage.getItem(BLOQUEO_KEY);
   if (!raw) return;
 
@@ -84,6 +87,8 @@ export const ProteccionQr: React.FC = () => {
         if (prev <= 1) {
           setBloqueado(false);
           setIntentos(0); 
+          sessionStorage.removeItem("intentos")
+        sessionStorage.setItem("intentos", "0")
           sessionStorage.removeItem(BLOQUEO_KEY);
           return 0;
         }
@@ -118,9 +123,19 @@ export const ProteccionQr: React.FC = () => {
     try {
       const llamada = await verifyTwoFactor(Token, secretData, codigo);
       if (!llamada.success) throw new Error(llamada.message);
+       const user=sessionStorage.getItem("userData")
+       if(user==null) {
+        throw new Error(llamada.message);
 
+       }
+       const usuario=JSON.parse(user)
+       usuario.twoFactorEnabled=true
+       sessionStorage.removeItem("userData")
+      sessionStorage.setItem("userData",JSON.stringify(usuario))
       // Si la verificación es correcta, redirige
       sessionStorage.removeItem('twofactor_secret');
+      sessionStorage.removeItem("intentos")
+  sessionStorage.setItem("intentos",`0` )
       router.push('/');
     } catch (err) {
       console.error(err);
@@ -140,7 +155,8 @@ export const ProteccionQr: React.FC = () => {
   } else {
     setError(`Código incorrecto. Te quedan ${3 - nuevos} intento(s).`);
   }
-
+  sessionStorage.removeItem("intentos")
+  sessionStorage.setItem("intentos",`${nuevos}` )
   return nuevos;
 });
 

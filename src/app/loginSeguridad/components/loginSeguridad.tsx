@@ -20,7 +20,9 @@ const router = useRouter();
     useEffect(() => {
     const desactivar = sessionStorage.getItem('desactivar2FA');
     if (desactivar !== 'true') return; // solo aplica para desactivar
-
+    const contador=sessionStorage.getItem("intentos")
+    setIntentos(parseInt(contador||"0"))   
+    
     const raw = sessionStorage.getItem(BLOQUEO_DESACTIVAR_KEY);
     if (!raw) return;
 
@@ -51,6 +53,8 @@ const router = useRouter();
           if (prev <= 1) {
             setBloqueado(false);
             setIntentos(0); 
+            sessionStorage.removeItem("intentos")
+        sessionStorage.setItem("intentos", "0")
             sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY); 
             clearInterval(timer);
             return 0;
@@ -110,11 +114,16 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
           if(desactivar==null){
                        const eventLogin = new CustomEvent("login-exitoso");
                       window.dispatchEvent(eventLogin);
-                       
+                        sessionStorage.setItem("login",'true')
                       }else{
+                        usuario.twoFactorEnabled=false
+                        sessionStorage.removeItem("userData")
+                        sessionStorage.setItem("userData",JSON.stringify(usuario))
                         sessionStorage.removeItem("desactivar2FA")
                         sessionStorage.removeItem("checkSeguridad")
                       }
+          sessionStorage.removeItem("intentos")
+  sessionStorage.setItem("intentos",`0` )
           router.push('/'); 
           return
     // Código correcto, redirige al home
@@ -136,7 +145,8 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
           } else {
             setError(`Código incorrecto. Te quedan ${3 - nuevosIntentos} intento(s).`);
           }
-
+          sessionStorage.removeItem("intentos")
+          sessionStorage.setItem("intentos",`${nuevosIntentos}` )
           return nuevosIntentos;
         });
       }
@@ -150,8 +160,7 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
     }
   };
 
- // 🔹 Manejar el botón Cancelar
-  const handleCancel = () => {
+ const handleCancel = () => {
     const desc=sessionStorage.getItem('desactivar2FA');
     if(desc=='true'){
           sessionStorage.removeItem('desactivar2FA');
@@ -165,7 +174,6 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
  // vuelve a la página anterior
     // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
   };
-
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-6 px-3 sm:px-6 lg:px-8">
       <div className="w-full max-w-md lg:max-w-2xl bg-white rounded-3xl shadow-md p-4 sm:p-6 lg:p-8">

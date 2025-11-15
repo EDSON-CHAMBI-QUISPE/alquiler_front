@@ -7,12 +7,12 @@ import { Trochut } from "next/font/google";
 
 interface MessageSeguridadProps {
   redireccion?: string; // ruta a donde redirige al marcar el checkbox
-  onClose?: () => void; // función para cerrar el mensaje si se hace clic fuera
+   onClose?: () => void;// función para cerrar el mensaje si se hace clic fuera
 }
 
 export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
  redireccion = "/SeguridadQr",
-  onClose,
+   onClose,
 }) => {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
@@ -20,10 +20,14 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
 
   useEffect(() => {
     const saved = sessionStorage.getItem("checkSeguridad");
-    if (saved === "true") {
-      setChecked(true);
-    }
-  }, []);
+     const user=sessionStorage.getItem("userData")
+     if(user==null){
+      setChecked(false)
+     }else{
+  setChecked(JSON.parse(user).twoFactorEnabled||false ); 
+  
+}
+}, []);
 
     const handleCheckboxChange = () => {
     // Alterna el valor actual
@@ -44,8 +48,12 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
         throw new Error("AcessToken no existente");
        sessionStorage.setItem("desactivar2FA", "true")
 
+       sessionStorage.removeItem("checkSeguridad");
+       // 🔥 IMPORTANTE — cerrar el modal antes de redirigir
+        onClose?.();
+
        router.push("/loginSeguridad")
-       return 
+       return;
       }catch(error){
        console.log(error)
       }
@@ -56,9 +64,9 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
   };
 
   const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose?.();
-    }
+   // if (e.target === e.currentTarget) {
+    //  onClose?.();
+   // }
   };
 
      return (

@@ -349,6 +349,7 @@ export default function RegistroImagen() {
 
       sessionStorage.setItem('userData', JSON.stringify(data.data.user));
     }
+      sessionStorage.setItem("login",'true')
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
       router.push("/");

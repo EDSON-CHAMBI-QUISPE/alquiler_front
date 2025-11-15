@@ -64,6 +64,10 @@ const [intentos, setIntentos] = useState(0);
 const [bloqueado, setBloqueado] = useState(false);
 const [tiempoRestante, setTiempoRestante] = useState(0);
 useEffect(() => {
+  const contador=sessionStorage.getItem("intentos")
+  
+  
+  setIntentos(parseInt(contador||"0"))
   const raw = sessionStorage.getItem(BLOQUEO_KEY);
   if (!raw) return;
 
@@ -91,7 +95,10 @@ useEffect(() => {
     setTiempoRestante((prev) => {
       if (prev <= 1) {
         setBloqueado(false);
-        setIntentos(0); 
+        setIntentos(0);
+        
+        sessionStorage.removeItem("intentos")
+        sessionStorage.setItem("intentos", "0")
         sessionStorage.removeItem(BLOQUEO_KEY);
         return 0;
       }
@@ -127,10 +134,20 @@ useEffect(() => {
     const llamada = await verifyTwoFactor(Token, secret, codigo);
     if (!llamada.success) throw new Error(llamada.message || 'Verificación fallida');
 
+     const user=sessionStorage.getItem("userData")
+       if(user==null) {
+        throw new Error(llamada.message);
+
+       }
+       const usuario=JSON.parse(user)
+       usuario.twoFactorEnabled=true
+       sessionStorage.removeItem("userData")
+      sessionStorage.setItem("userData",JSON.stringify(usuario))
     // limpieza: borra secret y backup codes
     sessionStorage.removeItem('twofactor_secret');
     //sessionStorage.removeItem('twofactor_backup');
-
+    sessionStorage.removeItem("intentos")
+  sessionStorage.setItem("intentos",`0` )
     router.push('/');
     } catch (err) {
     console.error(err);
@@ -142,7 +159,7 @@ useEffect(() => {
   if (nuevos >= 3) {
     setBloqueado(true);
     setTiempoRestante(300); // 5 minutos
-
+    
     const hasta = Date.now() + BLOQUEO_TTL_MS;
     sessionStorage.setItem(BLOQUEO_KEY, String(hasta));
 
@@ -150,7 +167,8 @@ useEffect(() => {
   } else {
     setError(`Código incorrecto. Te quedan ${3 - nuevos} intento(s).`);
   }
-
+  sessionStorage.removeItem("intentos")
+  sessionStorage.setItem("intentos",`${nuevos}` )
   return nuevos;
 });
 

@@ -71,7 +71,7 @@ function Inner() {
       router.push('/loginSeguridad')
       return
       }
-        
+          sessionStorage.setItem("login",'true')
           const eventLogin = new CustomEvent("login-exitoso");
           window.dispatchEvent(eventLogin);
           router.push('/');
@@ -122,8 +122,8 @@ if (typeof window !== 'undefined' && window.opener && window.opener !== window) 
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
 
         setTimeout(() => {
-          router.push('/login');
-        }, 1500);
+          router.push('/registro');
+        }, 3000);
       }
     };
 
