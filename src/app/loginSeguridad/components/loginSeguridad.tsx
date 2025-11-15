@@ -154,11 +154,15 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
   const handleCancel = () => {
     const desc=sessionStorage.getItem('desactivar2FA');
     if(desc=='true'){
-          sessionStorage.removeItem('desactivar2FA');}
+          sessionStorage.removeItem('desactivar2FA');
+        router.push('/')
+        }
   else {
     sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY);
-    sessionStorage.removeItem('checkSeguridad');}
-    router.back(); // vuelve a la página anterior
+    sessionStorage.clear();
+  router.push('/login')}
+  return;
+ // vuelve a la página anterior
     // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
   };
 

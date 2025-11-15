@@ -19,7 +19,7 @@ export const RegistrationForm: React.FC = () => {
     manejarBlur,
     validarFormulario
   } = useRegistrationForm();
-
+sessionStorage.clear()
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {

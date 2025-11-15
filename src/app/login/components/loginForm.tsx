@@ -21,7 +21,7 @@ export const LoginForm: React.FC = () => {
   } = useLoginForm();
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  sessionStorage.clear()
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {

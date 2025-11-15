@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState} from "react";
 import { getSocket } from "../realtime/socketClient";
 import { cerrarSesion } from "../services/UserService";
 
 export function useForceLogout(userId: string | null) {
     console.log("🔥 useForceLogout EJECUTADO. userId =", userId);
-
+    const [isSocketReady, setIsSocketReady] = useState(false);
     useEffect(() => {
     console.log("🔍 [useForceLogout] Hook montado. userId =", userId);
     if (!userId) return;
@@ -39,4 +39,5 @@ export function useForceLogout(userId: string | null) {
       socket.off("force-logout", onForceLogout);
     };
   }, [userId]);
+  return isSocketReady;
 }
