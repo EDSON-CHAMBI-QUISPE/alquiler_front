@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
@@ -27,7 +27,10 @@ export const LoginForm: React.FC = () => {
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
   };
-
+useEffect(()=>{
+      
+sessionStorage.clear()
+    },[]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorBackend(null);
