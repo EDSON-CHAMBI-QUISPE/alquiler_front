@@ -53,8 +53,10 @@ export default function MagicLinkPage() {
 
         setStatus("ok");
         setMessage("✅ Acceso concedido. Redirigiendo…");
-        sessionStorage.setItem("accessToken", accessToken);
+        sessionStorage.setItem("authToken", accessToken);
       sessionStorage.setItem('userData', JSON.stringify(data.data));
+      sessionStorage.setItem('loginEspecial', "true");
+      sessionStorage.setItem("login",'true')
     
       if(data.data.twoFactorEnabled)sessionStorage.setItem("checkSeguridad", "true");
       // Disparar evento de login exitoso para que el Header se actualice

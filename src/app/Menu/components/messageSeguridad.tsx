@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { desactivar2FA } from "@/app/teamsys/services/UserService";
+import { desactivar2FA, desactivar2FASinClave } from "@/app/teamsys/services/UserService";
 import { Trochut } from "next/font/google";
 
 interface MessageSeguridadProps {
@@ -46,12 +46,17 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
        const desactivar= sessionStorage.getItem("authToken")
        if(desactivar== null  )
         throw new Error("AcessToken no existente");
+        const login= sessionStorage.getItem("loginEspecial")
+        if(login=='true'){
+          router.push("/messageDesactivar")
+          return
+        }
        sessionStorage.setItem("desactivar2FA", "true")
-
+       
        sessionStorage.removeItem("checkSeguridad");
        // 🔥 IMPORTANTE — cerrar el modal antes de redirigir
         onClose?.();
-
+       
        router.push("/loginSeguridad")
        return;
       }catch(error){

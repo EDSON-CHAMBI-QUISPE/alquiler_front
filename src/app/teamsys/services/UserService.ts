@@ -205,6 +205,22 @@ export async function desactivar2FA(codigo: string, userToken: string) {
   }
    return response.json()
 }
+
+export async function desactivar2FASinClave(userToken: string) {
+  
+    const response = await fetch(`${API_URL}/api/teamsys/2fa/disable`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userToken}` // Token en cabecera
+      }
+    });
+    if (response.status === 401) {
+    cerrarSesion();
+    return;
+  }
+   return response.json()
+}
       
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;

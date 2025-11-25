@@ -124,6 +124,7 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
                       }
           sessionStorage.removeItem("intentos")
   sessionStorage.setItem("intentos",`0` )
+  sessionStorage.setItem("login",'true')
           router.push('/'); 
           return
     // Código correcto, redirige al home
@@ -164,6 +165,7 @@ console.log('verify-login payload ->', { userId, token }); // revisa en consola
     const desc=sessionStorage.getItem('desactivar2FA');
     if(desc=='true'){
           sessionStorage.removeItem('desactivar2FA');
+
         router.push('/')
         }
   else {

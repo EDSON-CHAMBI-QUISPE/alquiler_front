@@ -15,22 +15,23 @@ export default function Header() {
    // control si el menu esta visible
    const [menuVisible, setMenuVisible] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   // NUEVO: solo cuando esto sea true creamos socket
   const [canInitSocket, setCanInitSocket] = useState(false);
   const lastScrollY = useRef(0);
   let isSocketReady = useForceLogout(
-    isLoggedIn && canInitSocket ? userId : null
+    isLoggedIn && canInitSocket ? userId : null,accessToken ?? null 
   );
   const handleHomeClick = () => {
     // Si el socket NO está formado, limpiamos
     
-    if (!isSocketReady) {
+   {/*if (!isSocketReady) {
       // lo que pediste:
       sessionStorage.clear(); // o solo algunas claves si prefieres
       localStorage.removeItem("authToken");
       localStorage.removeItem("userData");
     }
+     */} 
     // No hace falta router.push aquí, Link ya navega a "/"
   };
   const router = useRouter();
@@ -82,10 +83,12 @@ useEffect(() => {
         const raw =
           sessionStorage.getItem("userData") ||
           localStorage.getItem("userData");
-        if (raw) {
+          const token=sessionStorage.getItem("authToken")
+        if (raw && token) {
           const parsed = JSON.parse(raw);
           const id = parsed._id || null;
           setUserId(id);
+          setAccessToken(token);
         }
       } catch (e) {
         console.error("[Header] error leyendo userData tras login:", e);
@@ -156,7 +159,7 @@ useEffect(() => {
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
         {/* LOGO */}
         <div className="flex items-center">
-          <Link href="/" onClick={handleHomeClick}>
+          <Link href="/" /*onClick={handleHomeClick}*/>
             <Icono size={40} />
           </Link>
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
@@ -339,7 +342,7 @@ useEffect(() => {
 
 
       {/* Espacio para el header fijo */}
-      <div className="h-16 sm:h-20"></div>
-    </>
-  );
+      {/*<div className="h-16 sm:h-20"></div>*/}
+     </>
+ );
 }

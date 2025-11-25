@@ -65,13 +65,18 @@ export default function RootLayout({
           </div>
         )}
 
+         {/* Header fijo (desktop + móvil) + footer móvil */}
         <Header />
 
-        {/* SOLUCIÓN: Cambiar el padding para que funcione en todos los dispositivos */}
-        <div className="pt-16 sm:pt-20">
-          {/* Aumenté el padding-top */}
+        {/* Contenido de la página */}
+        <main
+          className="
+            pt-16 sm:pt-20    /* espacio para el header fijo */
+            pb-16 sm:pb-0     /* espacio para el footer móvil en pantallas pequeñas */
+          "
+        >
           {children}
-        </div>
+        </main>
       </body>
     </html>
   );
