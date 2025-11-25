@@ -8,23 +8,23 @@ interface MensajeCerrarSesionProps {
   onCancel?: () => void; // opcional si luego quieres cerrarlo con un clic
 }
 
-export const MensajeCerrarSesion:React.FC<MensajeCerrarSesionProps> = ({
+export const MensajeCerrarSesion: React.FC<MensajeCerrarSesionProps> = ({
   onContinue,
   onCancel,
 }) => {
   return (
     // Fondo translúcido que cubre toda la pantalla
     <div
-className="fixed inset-0 bg-white/90 backdrop-blur-[1px] flex items-center justify-center z-50"
-     // onClick={onCancel} // permite cerrar al hacer clic fuera (opcional)
+      className="fixed inset-0 bg-white/90 backdrop-blur-[1px] flex items-center justify-center z-50"
+    // onClick={onCancel} // permite cerrar al hacer clic fuera (opcional)
     >
       {/* Contenedor del mensaje */}
       <div className="bg-white/90 rounded-3xl border border-gray-300 shadow-lg px-6 py-6 flex flex-col items-center max-w-sm w-full mx-4 animate-fade-in">
-        
-       <p className="text-center text-gray-800 text-sm sm:text-base font-bold">
-          <span className= "block">¿Deseas cerrar sesion actual?</span>
+
+        <p className="text-center text-gray-800 text-sm sm:text-base font-bold">
+          <span className="block">¿Deseas cerrar sesion actual?</span>
         </p>
-         {/* Botones responsivos del mismo tamaño */}
+        {/* Botones responsivos del mismo tamaño */}
         <div className="flex flex-col sm:flex-row gap-4 w-full">
           {/* Botón Continuar */}
           <button

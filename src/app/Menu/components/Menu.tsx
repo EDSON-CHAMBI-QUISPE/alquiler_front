@@ -10,6 +10,7 @@ import ActualizarUbicacion from "./actualizarUbicacion";
 import PaginaMetodosAutenticacion from "../../metodosAutenticacion/metodosAuten/pagina";
 import { MessageSeguridad } from "./messageSeguridad";
 import { MensajeCerrarSesion } from "./mensajeCerrarSesion";
+import SesionesDispositivos from "./sesiones-dispositivos"; // <-- NUEVO: import
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
@@ -20,6 +21,7 @@ export default function SimpleProfileMenu() {
   const [showMessageSeguridad, setShowMessageSeguridad] = useState(false);
   const [showMensajeCerrarSesion, setShowMensajeCerrarSesion] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [showSesionesDispositivos, setShowSesionesDispositivos] = useState(false);
 
   const [user, setUser] = useState<{
     id: string;
@@ -31,39 +33,56 @@ export default function SimpleProfileMenu() {
 
   const router = useRouter();
 
-  // 🔴 Cuando presiona el botón del menú "Cerrar sesión"
+  // 🔴 Cerrar sesión: limpia storage y muestra mensaje de salida
+  // (mantengo tu comportamiento original: limpia y activa el modal)
   const handleLogout = () => {
-    // Solo mostramos el mensaje de confirmación, NO borramos nada aún
-    setShowMensajeCerrarSesion(true);
-  };
-
-  // ✅ Si presiona "Aceptar" en el mensaje de confirmación
-  const handleConfirmLogout = () => {
-    // Eliminamos datos de sesión y emitimos el evento de logout
     localStorage.removeItem("authToken");
-    sessionStorage.clear();
+    sessionStorage.removeItem("authToken");
     localStorage.removeItem("userData");
     sessionStorage.removeItem("userData");
 
+    setShowMensajeCerrarSesion(true);
+  };
+
+  // ✅ Handlers que usará MensajeCerrarSesion (onContinue / onCancel)
+  const handleConfirmLogout = () => {
+    // Realizar logout inmediato (igual que la lógica del useEffect original)
     const eventLogout = new CustomEvent("logout-exitoso");
     window.dispatchEvent(eventLogout);
 
     setShowMensajeCerrarSesion(false);
-    router.push("/"); // Redirigimos al inicio
+    router.push("/");
   };
 
-  // ❌ Si presiona "Cancelar"
   const handleCancelLogout = () => {
-    setShowMensajeCerrarSesion(false); // Solo cerramos el modal
+    // Solo cerrar el modal (el useEffect tiene cleanup si había timer)
+    setShowMensajeCerrarSesion(false);
   };
 
-  // 🧩 Handlers de otros modales / acciones
+  // ⏳ Cuando se muestra el mensaje de cierre, esperamos 2s, emitimos evento y redirigimos
+  // (mantengo este efecto porque estaba en tu código original)
+  useEffect(() => {
+    if (showMensajeCerrarSesion) {
+      const timer = setTimeout(() => {
+        const eventLogout = new CustomEvent("logout-exitoso");
+        window.dispatchEvent(eventLogout);
+
+        setShowMensajeCerrarSesion(false);
+        router.push("/");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showMensajeCerrarSesion, router]);
+
   const handleContinue = () => setShowCerrarSesionMessage(false);
   const handleCancel = () => setShowCerrarSesionMessage(false);
   const handleCerrarSesionesClick = () => setShowCerrarSesionMessage(true);
 
   const handleCambiarTelefonoClick = () => setShowCambiarTelefono(true);
   const handleCerrarCambiarTelefono = () => setShowCambiarTelefono(false);
+
+  const toggleSubMenu = () => setShowSubMenu(prev => !prev);
 
   const handleCambiarContrasenaClick = () => setShowCambiarContrasena(true);
   const handleCerrarCambiarContrasena = () => setShowCambiarContrasena(false);
@@ -74,7 +93,10 @@ export default function SimpleProfileMenu() {
   const handleMetodosAutenticacionClick = () => setShowMetodosAutenticacion(true);
   const handleCerrarMetodosAutenticacion = () => setShowMetodosAutenticacion(false);
 
-  const toggleSubMenu = () => setShowSubMenu(prev => !prev);
+  // --- NUEVO: abrir Sesiones y dispositivos
+  const handleSesionesDispositivosClick = () => {
+    setShowSesionesDispositivos(true);
+  };
 
   useEffect(() => {
     // Obtener usuario desde sessionStorage
@@ -92,7 +114,7 @@ export default function SimpleProfileMenu() {
           "Usuario",
         correo: parsed.correo || parsed.email || "correo@desconocido.com",
         fotoPerfil: `${parsed.fotoPerfil}` || "/images/default-profile.jpg",
-        telefono: parsed.telefono || "",
+        telefono: parsed.telefono || ""
       });
     } catch (error) {
       console.error("Error al leer userData del sessionStorage:", error);
@@ -101,6 +123,7 @@ export default function SimpleProfileMenu() {
 
   return (
     <div className="relative w-full min-w-[220px] sm:min-w-[260px] lg:min-w-[300px] max-w-sm bg-white rounded-3xl shadow-lg border border-gray-200 p-5 sm:p-6 lg:p-6">
+
       {/* Datos del usuario */}
       <div className="flex items-center mb-4">
         <Image
@@ -136,10 +159,8 @@ export default function SimpleProfileMenu() {
 
       {/* Submenú */}
       {showSubMenu && (
-        <div
-          className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
-                      max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto"
-        >
+        <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
+                        max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto">
           {/* Cambiar contraseña */}
           <button
             onClick={handleCambiarContrasenaClick}
@@ -180,7 +201,15 @@ export default function SimpleProfileMenu() {
             Seguridad
           </button>
 
-          {/* Cerrar sesiones (remotas) */}
+          {/* --- NUEVO: Sesiones y dispositivos --- */}
+          <button
+            onClick={handleSesionesDispositivosClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Sesiones y dispositivos
+          </button>
+
+          {/* Cerrar sesiones */}
           <button
             onClick={handleCerrarSesionesClick}
             className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
@@ -216,13 +245,16 @@ export default function SimpleProfileMenu() {
       )}
 
       {showActualizarUbicacion && (
-        <ActualizarUbicacion onClose={handleCerrarActualizarUbicacion} />
+        <ActualizarUbicacion
+          onClose={handleCerrarActualizarUbicacion}
+        />
       )}
 
       {showMessageSeguridad && (
         <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
       )}
 
+      {/* ------------- CORRECCIÓN: pasar las props que espera MensajeCerrarSesion ------------- */}
       {showMensajeCerrarSesion && (
         <MensajeCerrarSesion
           onContinue={handleConfirmLogout}
@@ -260,6 +292,24 @@ export default function SimpleProfileMenu() {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- NUEVO: overlay para Sesiones y dispositivos --- */}
+      {showSesionesDispositivos && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="relative w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-[40px]">
+            {/* Botón cerrar overlay */}
+            <button
+              onClick={() => setShowSesionesDispositivos(false)}
+              className="absolute right-6 top-6 z-10 bg-white rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100"
+            >
+              ×
+            </button>
+
+            {/* Contenido de sesiones y dispositivos */}
+            <SesionesDispositivos />
           </div>
         </div>
       )}
