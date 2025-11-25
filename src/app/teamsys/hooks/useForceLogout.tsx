@@ -7,7 +7,11 @@ import { cerrarSesion } from "../services/UserService";
 export function useForceLogout(userId: string | null,accessToken: String | null) {
     console.log("🔥 useForceLogout EJECUTADO. userId =", userId);
      const [isSocketReady, setIsSocketReady] = useState(false);
-    useEffect(() => {
+     const getSocketStatus = () => {
+        const socket = getSocket();
+        return socket.connected;  // Retorna si el socket está conectado
+    };
+     useEffect(() => {
     console.log("🔍 [useForceLogout] Hook montado. userId =", userId);
     if (!userId) return;
     console.log("🔥 getSocket fue llamado");

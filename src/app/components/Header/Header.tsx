@@ -6,6 +6,7 @@ import Icono from './Icono';
 import { useRouter } from 'next/navigation';
 import SimpleProfileMenu from '@/app/Menu/components/Menu';
 import { useForceLogout } from "../../teamsys/hooks/useForceLogout";
+import { getSocket } from '@/app/teamsys/realtime/socketClient';
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -24,14 +25,19 @@ export default function Header() {
   );
   const handleHomeClick = () => {
     // Si el socket NO está formado, limpiamos
+  const respuesta=sessionStorage.getItem("login") 
+  if (!getSocket()){
+      handleLogout()
+
+    } 
+   if (!respuesta) {
     
-   {/*if (!isSocketReady) {
       // lo que pediste:
       sessionStorage.clear(); // o solo algunas claves si prefieres
       localStorage.removeItem("authToken");
       localStorage.removeItem("userData");
     }
-     */} 
+     
     // No hace falta router.push aquí, Link ya navega a "/"
   };
   const router = useRouter();
@@ -159,7 +165,7 @@ useEffect(() => {
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
         {/* LOGO */}
         <div className="flex items-center">
-          <Link href="/" /*onClick={handleHomeClick}*/>
+          <Link href="/" onClick={handleHomeClick}>
             <Icono size={40} />
           </Link>
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
