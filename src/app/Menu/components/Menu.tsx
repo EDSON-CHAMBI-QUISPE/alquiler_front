@@ -91,7 +91,7 @@ export default function SimpleProfileMenu() {
           `${parsed.firstName ?? ""} ${parsed.lastName ?? ""}`.trim() ||
           "Usuario",
         correo: parsed.correo || parsed.email || "correo@desconocido.com",
-        fotoPerfil: parsed.fotoPerfil || "/images/default-profile.jpg",
+        fotoPerfil: `${parsed.fotoPerfil}` || "/images/default-profile.jpg",
         telefono: parsed.telefono || "",
       });
     } catch (error) {
