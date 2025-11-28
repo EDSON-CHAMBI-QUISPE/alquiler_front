@@ -496,3 +496,66 @@ export async function obtenerPerfilActual(accessToken: string) {
     };
   };*/
 }
+
+export async function dispositivosSessiones( id: string) {
+  const token = sessionStorage.getItem("authToken") || '';
+  const res = await fetch(`${API_URL}/api/teamsys/sessions/user/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+  });
+  if (res.status === 401) {
+    cerrarSesion();
+    return; // Evita continuar si no está autorizado
+  }
+  return res.json();
+}
+/*
+export async function cerrarSesionesPersonalizado( id: string,tokens:string[]) {
+  const token = sessionStorage.getItem("authToken") || '';
+  const res = await fetch(`${API_URL}/api/teamsys/sessions/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: `{"tokens":"${tokens}}"}`
+  });
+  if (res.status === 401) {
+    cerrarSesion();
+    return; // Evita continuar si no está autorizado
+  }
+  return res.json();
+} 
+*/
+// alquiler_front/src/app/teamsys/services/UserService.ts
+// (buscar y reemplazar la implementación actual de cerrarSesionesPersonalizado)
+
+export async function cerrarSesionesPersonalizado(id: string, tokens: string[]) {
+  const token = sessionStorage.getItem("authToken") || '';
+  const base = (API_URL ?? "").trim().replace(/\/+$/, "");
+  const url = `${base}/api/teamsys/sessions/${id}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ tokens }), // <<--- JSON válido: { tokens: [ ... ] }
+    });
+
+    if (res.status === 401) {
+      cerrarSesion();
+      return { success: false, message: "No autorizado" };
+    }
+
+    const data = await res.json().catch(() => null);
+    return data ?? { success: res.ok, message: res.ok ? "OK" : `HTTP ${res.status}` };
+  } catch (e: any) {
+    return { success: false, message: e?.message ?? "Error de red" };
+  }
+}

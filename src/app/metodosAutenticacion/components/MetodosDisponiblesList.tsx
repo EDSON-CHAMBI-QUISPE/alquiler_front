@@ -34,7 +34,7 @@ export default function MetodosDisponiblesList({
           const esGoogleCargando = metodo.id === 'google' && cargandoGoogle;
           
           return (
-            <div key={metodo.id} className="flex flex-col"> {/* Cambiado a flex-col */}
+            <div key={metodo.id} className="flex flex-col cursor-auto"> {/* Cambiado a flex-col */}
               
               {/* CONTENEDOR HORIZONTAL: Checkbox + Cuadro del Método */}
               <div className="flex items-center space-x-3">
@@ -46,8 +46,19 @@ export default function MetodosDisponiblesList({
                       estaSeleccionado 
                         ? 'bg-black-800 border-black-800'
                         : 'border-black-800 bg-blue-50 hover:border-black-800' 
-                    } ${esGoogleCargando ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => !esGoogleCargando && onToggleSeleccion(metodo.id)}
+                    } ${esGoogleCargando ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      e.preventDefault();
+                      e.nativeEvent.stopImmediatePropagation();
+                      if (!esGoogleCargando ){ 
+                        onToggleSeleccion(metodo.id);
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
                   >
                     {estaSeleccionado && !esGoogleCargando && (
                       <span className="text-black text-sm font-bold">✓</span>
@@ -71,7 +82,7 @@ export default function MetodosDisponiblesList({
                   } ${modos.modoSeleccion && !esGoogleCargando ? '' : 'cursor-default'} ${
                     esGoogleCargando ? 'opacity-70' : ''
                   }`}
-                  onClick={() => modos.modoSeleccion && !esGoogleCargando && onToggleSeleccion(metodo.id)}
+                  //onClick={() => modos.modoSeleccion && !esGoogleCargando && onToggleSeleccion(metodo.id)}
                 >
                   <div className="flex items-center space-x-3">
                     {/* Icono del método */}

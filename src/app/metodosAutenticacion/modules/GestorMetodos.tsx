@@ -33,7 +33,7 @@ const StatusToast: React.FC<StatusToastProps> = ({ kind, text, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      className="fixed inset-0 z-10000 flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
       onClick={(e) => e.stopPropagation()} // evita que haga click en padres
     >
       <div
@@ -145,8 +145,11 @@ export default function GestorMetodos({
     }
 
     if (modos.metodosSeleccionados.includes(metodoId)) {
-      setModos(prev => ({ ...prev, metodosSeleccionados: [] }));
-    } else {
+    setModos(prev => ({ 
+      ...prev, 
+      metodosSeleccionados: prev.metodosSeleccionados.filter(id => id !== metodoId) 
+    }));
+  } else {
       setModos(prev => ({ ...prev, metodosSeleccionados: [metodoId] }));
     }
   };
@@ -482,7 +485,7 @@ const activarMetodoGoogle = (): void => {
 
   return (
   <>
-    {(mensajeOk || error) && (
+    {(mensajeOk || error) && !modos.modoSeleccion &&  (
       <StatusToast
         kind={mensajeOk ? 'success' : 'error'}
         text={mensajeOk ?? error ?? ''}

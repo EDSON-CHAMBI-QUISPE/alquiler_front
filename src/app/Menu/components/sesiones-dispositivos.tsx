@@ -3,22 +3,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type SessionItem = {
-  id: string;
-  dispositivo: string;
-  navegador: string;
-  sistemaOperativo: string;
-  fechaInicio: string;
-  esActual: boolean;
-};
-
+import { ISessionResponse } from "@/app/types";
+import { dispositivosSessiones, cerrarSesionesPersonalizado, cerrarSesionesRemotas } from "@/app/teamsys/services/UserService";
 type Status = "idle" | "loading" | "error" | "success";
 
 export default function SesionesDispositivos() {
   const router = useRouter();
 
-  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [sessions, setSessions] = useState<ISessionResponse[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -29,52 +21,76 @@ export default function SesionesDispositivos() {
 
   // Estados para cierre individual
   const [confirmSingleModal, setConfirmSingleModal] = useState(false);
-  const [selectedSessionToClose, setSelectedSessionToClose] = useState<SessionItem | null>(null);
+  const [selectedSessionToClose, setSelectedSessionToClose] = useState<ISessionResponse | null>(null);
   const [singleCloseId, setSingleCloseId] = useState<string | null>(null);
   const [singleCloseStatus, setSingleCloseStatus] = useState<"" | "loading" | "success" | "error">("");
   const [singleCloseError, setSingleCloseError] = useState<string | null>(null);
-
+  const [tokens, setTokens] = useState<string | null>(null);
   // 🔵 Cargar sesiones mock (reemplazar por API real)
+
+  function isSessionResponse(obj: any): obj is ISessionResponse {
+    return (
+      typeof obj === "object" &&
+      obj !== null &&
+      typeof obj._id === "string" &&
+      typeof obj.userId === "string" &&
+      typeof obj.token === "string"
+    );
+  }
+
+  function isSessionResponseArray(obj: any): obj is ISessionResponse[] {
+    return Array.isArray(obj) && obj.every(isSessionResponse);
+  }
+
   useEffect(() => {
-    setStatus("loading");
+    const loadSessions = async () => {
+      try {
+        setStatus("loading");
 
-    const t = setTimeout(() => {
-      const mock: SessionItem[] = [
-        {
-          id: "1",
-          dispositivo: "Laptop Josue",
-          navegador: "Chrome",
-          sistemaOperativo: "Windows 11",
-          fechaInicio: "2025-11-24 15:30",
-          esActual: true,
-        },
-        {
-          id: "2",
-          dispositivo: "iPhone 14",
-          navegador: "Safari",
-          sistemaOperativo: "iOS 18",
-          fechaInicio: "2025-11-23 21:15",
-          esActual: false,
-        },
-        {
-          id: "3",
-          dispositivo: "PC Trabajo",
-          navegador: "Edge",
-          sistemaOperativo: "Windows 10",
-          fechaInicio: "2025-11-20 09:05",
-          esActual: false,
-        },
-      ];
+        const usuario = sessionStorage.getItem("userData");
+        //nuevo
+        const authToken = sessionStorage.getItem("authToken") || null;
 
-      setSessions(mock);
-      setStatus("success");
-    }, 600);
+        if (!usuario) throw new Error("No hay usuario en sessionStorage.");
 
-    return () => clearTimeout(t);
+        const user = JSON.parse(usuario);
+
+        const dispositivos = await dispositivosSessiones(user._id);
+
+        if (!dispositivos || !dispositivos.success) {
+          throw new Error("Error al obtener sesiones del servidor.");
+        }
+
+        const sessionsData = dispositivos.data.sessions;
+
+        // Validación estricta con type guard
+        if (!isSessionResponseArray(sessionsData)) {
+          console.error("Respuesta no coincide con ISessionResponse[]", sessionsData);
+          throw new Error("Formato inválido de datos recibidos.");
+        }
+
+        setTokens(authToken);  //guardar token actual
+        setSessions(sessionsData);
+        setStatus("success")  //pone sucess
+
+        /*/ Delay opcional
+        setTimeout(() => {
+          setStatus("success");
+        }, 300);*/
+
+      } catch (error) {
+        console.error(error);
+        setStatus("error");
+        setErrorMessage((error as Error).message || "Error")
+      }
+    };
+
+    loadSessions();
   }, []);
 
+
   const hasOtherSessions = useMemo(
-    () => sessions.some((s) => !s.esActual),
+    () => sessions.some((s) => s.isActive),
     [sessions]
   );
 
@@ -87,7 +103,7 @@ export default function SesionesDispositivos() {
 
   const handleCancelCloseAll = () => setShowCloseAllModal(false);
 
-  // Confirmar cerrar todas: muestra mensaje success/error centrado
+  /*/ Confirmar cerrar todas: muestra mensaje success/error centrado
   const handleConfirmCloseAll = () => {
     setCloseAllStatus("loading");
 
@@ -95,7 +111,7 @@ export default function SesionesDispositivos() {
     setTimeout(() => {
       const ok = true; // cambiar a false para probar error
       if (ok) {
-        const current = sessions.find((s) => s.esActual);
+        const current = sessions.find((s) => !s.isActive);
         setSessions(current ? [current] : []);
         setCloseAllStatus("success");
       } else {
@@ -111,7 +127,42 @@ export default function SesionesDispositivos() {
         setCloseAllError(null);
       }, 3000);
     }, 700);
+  };*/
+  const handleConfirmCloseAll = async () => {
+    setCloseAllStatus("loading");
+    setCloseAllError(null);
+
+    try {
+      const accessToken = sessionStorage.getItem("authToken");
+      if (!accessToken) throw new Error("No hay token de sesión");
+
+      const res = await cerrarSesionesRemotas(accessToken);
+      if (!res.ok) throw new Error(res.message || "No se pudieron cerrar las sesiones remotas");
+
+      // Refrescar sesiones desde el backend para mantener consistencia
+      const usuario = sessionStorage.getItem("userData");
+      const user = usuario ? JSON.parse(usuario) : null;
+      if (user) {
+        const dispositivos = await dispositivosSessiones(user._id);
+        if (dispositivos && dispositivos.success) {
+          setSessions(dispositivos.data.sessions);
+        }
+      }
+
+      setCloseAllStatus("success");
+    } catch (err: any) {
+      console.error(err);
+      setCloseAllStatus("error");
+      setCloseAllError(err?.message || "Error al cerrar sesiones");
+    } finally {
+      setShowCloseAllModal(false);
+      setTimeout(() => {
+        setCloseAllStatus("");
+        setCloseAllError(null);
+      }, 3000);
+    }
   };
+
 
   // NAV: intento robusto para asegurar redirección a inicio
   const goHome = (e?: React.MouseEvent) => {
@@ -141,17 +192,25 @@ export default function SesionesDispositivos() {
     }
   };
 
-  // Abre el modal de confirmación individual (no cierra todavía)
-  const openConfirmSingleModal = (session: SessionItem) => {
-    if (session.esActual) return; // no permitir cerrar la sesión actual
+  /*/ Abre el modal de confirmación individual (no cierra todavía)
+  const openConfirmSingleModal = (session: ISessionResponse) => {
+    if (!session.isActive) return; // no permitir cerrar la sesión actual
     setSelectedSessionToClose(session);
     setConfirmSingleModal(true);
-  };
+  };*/
+  const openConfirmSingleModal = (session: ISessionResponse) => {
+  if (!session.isActive) return;
+  if (tokens && session.token === tokens) return;
+  setSelectedSessionToClose(session);
+  setConfirmSingleModal(true);
+};
 
-  // Acción confirmada: cerrar la sesión seleccionada
+
+  /*/ Acción confirmada: cerrar la sesión seleccionada
   const handleConfirmSingleClose = () => {
     if (!selectedSessionToClose) return;
-    const sessionId = selectedSessionToClose.id;
+    const sessionId = selectedSessionToClose._id;
+    //const sessionTokenToClose=selectedSessionToClose.token;//nuevoooo
 
     setSingleCloseId(sessionId);
     setSingleCloseStatus("loading");
@@ -161,7 +220,7 @@ export default function SesionesDispositivos() {
     setTimeout(() => {
       const success = Math.random() > 0.12; // 88% de exito por defecto
       if (success) {
-        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        setSessions((prev) => prev.filter((s) => s._id !== sessionId));
         setSingleCloseStatus("success");
       } else {
         setSingleCloseStatus("error");
@@ -177,7 +236,56 @@ export default function SesionesDispositivos() {
         setSingleCloseId(null);
       }, 3000);
     }, 700);
+  };*/
+  const handleConfirmSingleClose = async () => {
+    if (!selectedSessionToClose) return;
+    const sessionId = selectedSessionToClose._id;
+    const sessionTokenToClose = selectedSessionToClose.token;
+
+    // Proteger: no permitir cerrar la sesión actual
+    if (tokens && sessionTokenToClose === tokens) {
+      setSingleCloseError("No se puede cerrar la sesión en uso.");
+      return;
+    }
+
+    setSingleCloseId(sessionId);
+    setSingleCloseStatus("loading");
+    setSingleCloseError(null);
+
+    const previous = sessions;
+
+    // Optimistic UI
+    setSessions(prev => prev.filter(s => s._id !== sessionId));
+
+    try {
+      // id según tu ejemplo debe ser el userId (o el id que pide el PATCH)
+      // en tu ejemplo de PATCH mostraste: PATCH /api/teamsys/sessions/6926ef33b8eb69e3fb0463dd
+      // ese id parece ser el userId. Asegúrate de pasar el id correcto.
+      const userId = selectedSessionToClose.userId;
+      const res = await cerrarSesionesPersonalizado(userId, [sessionTokenToClose]);
+
+      if (!res?.success) {
+        throw new Error(res?.message || "No se pudo cerrar la sesión");
+      }
+
+      setSingleCloseStatus("success");
+    } catch (err: any) {
+      console.error(err);
+      // rollback
+      setSessions(previous);
+      setSingleCloseStatus("error");
+      setSingleCloseError(err?.message || "Error al cerrar la sesión");
+    } finally {
+      setConfirmSingleModal(false);
+      setTimeout(() => {
+        setSingleCloseStatus("");
+        setSingleCloseError(null);
+        setSingleCloseId(null);
+        setSelectedSessionToClose(null);
+      }, 2500);
+    }
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#3454FF] z-50 px-6 py-10 overflow-auto">
@@ -214,10 +322,9 @@ export default function SesionesDispositivos() {
             onClick={(e) => { e.stopPropagation(); handleOpenCloseAllModal(); }}
             disabled={!hasOtherSessions}
             className={`px-10 py-3 rounded-full font-semibold text-lg transition
-              ${
-                hasOtherSessions
-                  ? "bg-[#29A5FF] text-white hover:bg-[#1594F0]"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              ${hasOtherSessions
+                ? "bg-[#29A5FF] text-white hover:bg-[#1594F0]"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
               }`}
           >
             Cerrar sesiones
@@ -248,14 +355,14 @@ export default function SesionesDispositivos() {
 
               {status === "success" &&
                 sessions.map((session) => (
-                  <tr key={session.id} className="border-t border-gray-100">
+                  <tr key={session._id} className="border-t border-gray-100">
                     <td className="px-10 py-6">
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-900 text-base">
-                          {session.dispositivo}
+                          {session.deviceInfo.device}
                         </span>
 
-                        {session.esActual && (
+                        {!session.isActive && (
                           <span className="mt-2 px-3 py-1 text-xs rounded-full bg-[#E6F3FF] text-[#1C8CE8] font-semibold w-max">
                             Este dispositivo
                           </span>
@@ -263,24 +370,27 @@ export default function SesionesDispositivos() {
                       </div>
                     </td>
 
-                    <td className="px-10 py-6 text-gray-700">{session.sistemaOperativo}</td>
-                    <td className="px-10 py-6 text-gray-700">{session.navegador}</td>
-                    <td className="px-10 py-6 text-gray-700">{session.fechaInicio}</td>
+                    <td className="px-10 py-6 text-gray-700">{session.deviceInfo.os}</td>
+                    <td className="px-10 py-6 text-gray-700">{session.deviceInfo.browser}</td>
+                    <td className="px-10 py-6 text-gray-700">{session.lastActivity}</td>
 
                     <td className="px-10 py-6 text-center">
                       <button
-                        disabled={session.esActual || (singleCloseStatus === "loading" && singleCloseId === session.id)}
+                        disabled={!session.isActive || (singleCloseStatus === "loading" && singleCloseId === session._id)|| (tokens !==null && session.token === tokens)}
                         type="button"
                         onClick={(e) => { e.stopPropagation(); openConfirmSingleModal(session); }}
-                        className={`px-8 py-3 rounded-full font-semibold text-white text-sm ${
-                          session.esActual
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : (singleCloseStatus === "loading" && singleCloseId === session.id)
-                              ? "bg-[#9AD9FF] cursor-wait"
-                              : "bg-[#29A5FF] hover:bg-[#1594F0]"
-                        }`}
+                        className={`px-8 py-3 rounded-full font-semibold text-white text-sm ${!session.isActive
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : (singleCloseStatus === "loading" && singleCloseId === session._id)
+                            ? "bg-[#9AD9FF] cursor-wait"
+                            : "bg-[#29A5FF] hover:bg-[#1594F0]"
+                          }`}
                       >
-                        {singleCloseStatus === "loading" && singleCloseId === session.id ? "Cerrando..." : "Cerrar sesión"}
+                        {(singleCloseStatus === "loading" && singleCloseId === session._id)
+                          ? "Cerrando..."
+                          : (tokens && session.token === tokens)
+                            ? "En uso"
+                            : "Cerrar sesión"}
                       </button>
                     </td>
                   </tr>
@@ -340,7 +450,7 @@ export default function SesionesDispositivos() {
               </h2>
 
               <p className="text-center text-gray-700 mb-8 text-lg">
-                Al aceptar quedará cerrada la sesión: <strong>{selectedSessionToClose.dispositivo}</strong>
+                Al aceptar quedará cerrada la sesión: <strong>{selectedSessionToClose.deviceInfo.device}</strong>
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-6">

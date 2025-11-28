@@ -68,7 +68,16 @@ export default function MetodoActivoPanel({
                         ? 'border-blue-500 bg-blue-500' 
                         : 'border-gray-300 bg-white hover:border-blue-500'
                     }`}
-                    onClick={() => puedeEliminar && onToggleEliminar(metodo.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      e.nativeEvent.stopImmediatePropagation();
+                      puedeEliminar && onToggleEliminar(metodo.id);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
                   >
                     {estaSeleccionadoParaEliminar && (
                       <span className="text-white text-sm font-bold">✓</span>
